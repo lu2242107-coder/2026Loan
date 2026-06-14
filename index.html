@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
@@ -49,12 +49,11 @@
             background: #94a3b8;
         }
     </style>
-    <!-- Alpine.js for High Performance Dynamic State Management -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
+    <!-- 1. 定義 feibApp 為全域 JavaScript 函數 (置於 Alpine.js 載入前，確保安全宣告) -->
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('feibApp', () => ({
+        function feibApp() {
+            return {
                 tab: 'rules',
                 showAddGuidelineModal: false,
                 searchQuery: '', // 搜尋關鍵字
@@ -69,9 +68,23 @@
                     '資深副理': { spi: 83, rates: [185, 286, 371, 386, 456], feeRates: [4.0, 8.6, 12.6, 16.6, 20.6] }
                 },
 
+                // 🌟 新進同仁與晉升折減參數對應表 (MSPI 因子)
+                tenureOptions: [
+                    { id: 'regular', name: '常規在職人員 (100% SPI)', factor: 1.0 },
+                    { id: 'no_exp_m1', name: '新進無經驗 - 第 1 個月 (20% SPI)', factor: 0.2 },
+                    { id: 'no_exp_m2', name: '新進無經驗 - 第 2 個月 (40% SPI)', factor: 0.4 },
+                    { id: 'no_exp_m3', name: '新進無經驗 - 第 3 個月 (60% SPI)', factor: 0.6 },
+                    { id: 'no_exp_m4', name: '新進無經驗 - 第 4 個月 (80% SPI)', factor: 0.8 },
+                    { id: 'has_exp_m1', name: '新進具經驗 - 第 1 個月 (30% SPI)', factor: 0.3 },
+                    { id: 'has_exp_m2', name: '新進具經驗 - 第 2 個月 (60% SPI)', factor: 0.6 },
+                    { id: 'has_exp_m3', name: '新進具經驗 - 第 3 個月 (90% SPI)', factor: 0.9 },
+                    { id: 'promoted', name: '晉升新職前三個月 (95折 / 95% SPI)', factor: 0.95 }
+                ],
+
                 // 逆推器輸入資料
                 reverseInput: {
                     title: '襄理',
+                    tenureModifierId: 'regular', // 預設在職狀態
                     targetBonus: 100000,
                     weights: {
                         mortgage: 50,  // 房貸權重
@@ -85,6 +98,7 @@
                 // 業績計算器輸入資料
                 calcInput: {
                     title: '襄理',
+                    tenureModifierId: 'regular', // 預設在職狀態
                     mortgage: 3000,    // 房貸撥款金額 (萬元)
                     credit: 150,       // 信貸撥款金額 (萬元)
                     insurance: 100000, // 房貸壽保費 (元)
@@ -101,7 +115,7 @@
                         id: 1, 
                         tag: '📝 信貸利費核備', 
                         title: '新版利率與費用核備權限 (信貸晨會宣達事項_20260413.pdf)', 
-                        content: '• 分行區總監：授權調幅 ≤ 4% 且利率 $\\ge$ 6.0%\n• 分行部主管：授權調幅 ≤ 4% 且利率 $\\ge$ 3.5%\n• 產品部主管：調幅 > 4% 或利率 $\\ge$ 2.6%\n• 核備率監控：當月核備撥款比率限制 30% 內，若超標則次日起低於 5.5% 案件一律須送產品部主管覆核\n• 費用核備：僅限本行既有存戶/卡戶且第一年收益達標，最高減免 1,000 元（四師與循環型不可減免）', 
+                        content: '• 分行區總監：授權調幅 ≤ 4% 且利率 ≥ 6.0%\n• 分行部主管：授權調幅 ≤ 4% 且利率 ≥ 3.5%\n• 產品部主管：調幅 > 4% 或利率 ≥ 2.6%\n• 核備率監控：當月核備撥款比率限制 30% 內，若超標則次日起低於 5.5% 案件一律須送產品部主管覆核\n• 費用核備：僅限本行既有存戶/卡戶且第一年收益達標，最高減免 1,000 元（四師與循環型不可減免）', 
                         date: '2026/04/13' 
                     },
                     { 
@@ -129,7 +143,7 @@
                         id: 5, 
                         tag: '📈 Q2 推廣獎勵', 
                         title: '循環型信貸 Q2 業務獎勵與客戶活動 (20260427信貸晨會宣達事項.pdf)', 
-                        content: '• 產品權數加碼：10萬~50萬享 1.1 倍；50萬~150萬享 1.2 倍；150萬以上享 1.3 倍權數獎勵\n• 動用獎勵加碼：額度設立後，首月平均動用率 $\\ge$ 50% 者，首月動用獎勵權數倍增至 2.0 倍\n• 部落大豐收：各組當月每累計承作 3 件循環型設立額度，次月可獲得 1 件一次撥付型之例外利率核備額度\n• 客戶助攻：設立額度 10 萬（1 次抽獎）及 50 萬以上（2 次抽獎）且綁定 Line Happy+ 即可參加 2,000 元刷卡金抽獎', 
+                        content: '• 產品權數加碼：10萬~50萬享 1.1 倍；50萬~150萬享 1.2 倍；150萬以上享 1.3 倍權數獎勵\n• 動用獎勵加碼：額度設立後，首月平均動用率 ≥ 50% 者，首月動用獎勵權數倍增至 2.0 倍\n• 部落大豐收：各組當月每累計承作 3 件循環型設立額度，次月可獲得 1 件一次撥付型之例外利率核備額度\n• 客戶助攻：設立額度 10 萬（1 次抽獎）及 50 萬以上（2 次抽獎）且綁定 Line Happy+ 即可參加 2,000 元刷卡金抽獎', 
                         date: '2026/04/27' 
                     },
                     { 
@@ -143,20 +157,20 @@
                         id: 7, 
                         tag: '🏠 房貸特定客群', 
                         title: '特定客群管理條件與加強磚造限制 (20260316-房貸宣達事項-特定客群.pdf)', 
-                        content: '• 特定客群減成：非公開自營商/董監/領現/自由業等非受僱客群，或工廠技術員、零售銷售、直銷、保全、司機，且年收入 $\\le$ 60 萬元者，貸放成數依各區對應最高上限下修 10%\n• 建物結構限制：特定客群（年收 $\\le$ 60萬）且擔保品建物為「加強磚造」者，新戶及舊戶增貸一律暫緩承作\n• 解套方案：若主動徵提保證人，且保證人符合優質受僱客群（年收 > 60萬）或「A+客群」資格者，可按 A+客群優專核貸，免受下修與加強磚造限制', 
+                        content: '• 特定客群減成：非公開自營商/董監/領現/自由業等非受僱客群，或工廠技術員、零售銷售、直銷、保全、司機，且年收入 ≤ 60 萬元者，貸放成數依各區對應最高上限下修 10%\n• 建物結構限制：特定客群（年收 ≤ 60萬）且擔保品建物為「加強磚造」者，新戶及舊戶增貸一律暫緩承作\n• 解套方案：若主動徵提保證人，且保證人符合優質受僱客群（年收 > 60萬）或「A+客群」資格者，可按 A+客群優專核貸，免受下修與加強磚造限制', 
                         date: '2026/03/16' 
                     },
                     { 
                         id: 8, 
                         tag: '🛡️ 卡融管控措施', 
                         title: '房貸卡融管控與輕鬆繳房貸專案 (20260525-房貸宣達事項-循環型房貸相關注意事項.pdf)', 
-                        content: '• 卡融成數下修：中長擔 + 卡融（理財型）合計額度以各區最高貸放上限下修 10% 為原則\n• 加值金補足機制：配合卡融成數調降 10%，所減少之額度同仁得以申辦「加值金貸款」進行額度補足（以 10% 為限）\n• 限制排除條件：六師、年收達 300 萬、本行關企副總以上、VIP 5星等尊榮戶、A+客群專案者免受調降 10% 限制\n• 輕鬆繳房貸：自住且屋齡 $\\le$ 25 年（雙北除外）、月負比 $\\le$ 70%、卡融佔鑑值 $\\le$ 3 成可免減 10%，但保全/警衛/代書/作業員/信用大白（無信用往來紀錄）排除適用且無寬限期', 
+                        content: '• 卡融成數下修：中長擔 + 卡融（理財型）合計額度以各區最高貸放上限下修 10% 為原則\n• 加值金補足機制：配合卡融成數調降 10%，所減少之額度同仁得以申辦「加值金貸款」進行額度補足（以 10% 為限）\n• 限制排除條件：六師、年收達 300 萬、本行關係企業副總以上、VIP 5星等尊榮戶、A+客群專案者免受調降 10% 限制\n• 輕鬆繳房貸：自住且屋齡 ≤ 25 年（雙北除外）、月負比 ≤ 70%、卡融佔鑑值 ≤ 3 成可免減 10%，但保全/警衛/代書/作業員/信用大白（無信用往來紀錄）排除適用且無寬限期', 
                         date: '2026/05/25' 
                     },
                     { 
                         id: 9, 
                         tag: '⚠️ 授信防線', 
-                        title: '辦理授信案件應注意事項 (晨會宣導_(辦理授信案件_應注意事項)_20260528.pdf)', 
+                        title: '辦辦授信案件應注意事項 (晨會宣導_(辦理授信案件_應注意事項)_20260528.pdf)', 
                         content: '• 婉拒客訴避嫌：案件未通過時，嚴禁以直接或間接方式向客戶透露任何內部審核細節（如：曾有犯罪紀錄、被列告誡戶、控卡、欠繳保費等），一律口徑一致以「綜合評分不足」進行說明\n• 申覆即刻失效：案件一經向授信處提出「申覆」，不論原審核或對保進度，原核准條件即刻判定失效。同仁務必確實告知客戶將重新開啟新一輪授信審查，不可保留原核條件', 
                         date: '2026/05/28' 
                     },
@@ -171,7 +185,7 @@
                         id: 11, 
                         tag: '🚫 防杜代辦', 
                         title: '信貸跨區案件嚴格管控措施 (防杜代辦-信貸跨區案件管控措施)', 
-                        content: '• 跨區定義比對：依進件時客戶的通訊地址與公司地址，與 AO 進件分行區域進行交叉比對。花東、宜蘭及離島屬跨區件\n• 雙重查核標準：每季例行查核，若上季跨區撥貸案件每月 $\\ge$ 6 件，且該同仁之跨區不良案件比率（含 M2+ 及協議案件）高於行內整體平均值者，即行入列管控\n• 第一階段管控：進件時必須額外檢附、並加送分行通路部「區總監」覆核後始得進件受理\n• 第二階段管控：連續兩季高於整體平均者，暫停承作獨立客群（自營、獨立上班族等）跨區件，僅限「擇優」承作卓越客群（四師、公務員、薪轉、關企）', 
+                        content: '• 跨區定義比對：依進件時客戶的通訊地址與公司地址，與 AO 進件分行區域進行交叉比對。花東、宜蘭及離島屬跨區件\n• 雙重查核標準：每季例行查核，若上季跨區撥貸案件每月 ≥ 6 件，且該同仁之跨區不良案件比率（含 M2+ 及協議案件）高於行內整體平均值者，即行入列管控\n• 第一階段管控：進件時必須額外檢附、並加送分行通路部「區總監」覆核後始得進件受理\n• 第二階段管控：連續兩季高於整體平均者，暫停承作獨立客群（自營、獨立上班族等）跨區件，僅限「擇優」承作卓越客群（四師、公務員、薪轉、關企）', 
                         date: '2026/03/26' 
                     }
                 ],
@@ -193,6 +207,14 @@
                 // 狼性逆推算結果
                 get reverseResult() {
                     return this.solveReverse();
+                },
+
+                // 滑桿權重總和
+                get weightSum() {
+                    return this.reverseInput.weights.mortgage +
+                           this.reverseInput.weights.credit +
+                           this.reverseInput.weights.referral +
+                           this.reverseInput.weights.insurance;
                 },
 
                 // 當期計算結果明細
@@ -242,6 +264,7 @@
                 resetCalcInputs() {
                     this.calcInput = {
                         title: this.calcInput.title,
+                        tenureModifierId: 'regular',
                         mortgage: 0,
                         credit: 0,
                         insurance: 0,
@@ -253,10 +276,10 @@
                     };
                 },
 
-                // 核心分段累進獎勵計算引擎 (適用於逆推與正推)
-                calculateBonusRaw(points, title, feeIncome, projectPoints) {
+                // 核心分段累進獎勵計算引擎 (適用於逆推與正推 - 支援新進 MSPI 折減因子)
+                calculateBonusRaw(points, title, feeIncome, projectPoints, tenureFactor = 1.0) {
                     const rule = this.titleRules[title];
-                    const spi = rule.spi;
+                    const spi = rule.spi * tenureFactor; // 👈 完美導入在職折減，自動縮小 SPI 指標
 
                     let rate = (points / spi) * 95 + 5;
                     rate = Math.round(rate * 100) / 100; // 四捨五入到小數第二位 %
@@ -328,16 +351,16 @@
                         feeBonus: totalFeeBonus,
                         total: totalPtBonus + totalFeeBonus,
                         breakdown: [
-                            { tier: '100% 以下', pts: row1_pt = p1, ptBonus: ptBonus1, feeShare: Math.round(fee1), feeBonus: Math.round(feeBonus1) },
-                            { tier: '101%~150%', pts: row2_pt = p2, ptBonus: ptBonus2, feeShare: Math.round(fee2), feeBonus: Math.round(feeBonus2) },
-                            { tier: '151%~200%', pts: row3_pt = p3, ptBonus: ptBonus3, feeShare: Math.round(fee3), feeBonus: Math.round(feeBonus3) },
-                            { tier: '201%~250%', pts: row4_pt = p4, ptBonus: ptBonus4, feeShare: Math.round(fee4), feeBonus: Math.round(feeBonus4) },
-                            { tier: '250% 以上', pts: row5_pt = p5, ptBonus: ptBonus5, feeShare: Math.round(fee5), feeBonus: Math.round(feeBonus5) }
+                            { tier: '100% 以下', pts: p1, ptBonus: ptBonus1, feeShare: Math.round(fee1), feeBonus: Math.round(feeBonus1) },
+                            { tier: '101%~150%', pts: p2, ptBonus: ptBonus2, feeShare: Math.round(fee2), feeBonus: Math.round(feeBonus2) },
+                            { tier: '151%~200%', pts: p3, ptBonus: ptBonus3, feeShare: Math.round(fee3), feeBonus: Math.round(feeBonus3) },
+                            { tier: '201%~250%', pts: p4, ptBonus: ptBonus4, feeShare: Math.round(fee4), feeBonus: Math.round(feeBonus4) },
+                            { tier: '250% 以上', pts: p5, ptBonus: ptBonus5, feeShare: Math.round(fee5), feeBonus: Math.round(feeBonus5) }
                         ]
                     };
                 },
 
-                // 逆推計算求解
+                // 逆推計算求解 (聯動在職折減)
                 solveReverse() {
                     if (this.weightSum !== 100 || !this.reverseInput.targetBonus || this.reverseInput.targetBonus <= 0) {
                         return null;
@@ -346,6 +369,8 @@
                     const title = this.reverseInput.title;
                     const targetBonus = this.reverseInput.targetBonus;
                     const feePerPoint = this.reverseInput.feePerPoint;
+                    const tenureModifier = this.tenureOptions.find(o => o.id === this.reverseInput.tenureModifierId) || { factor: 1.0 };
+                    const tenureFactor = tenureModifier.factor;
 
                     let lowPts = 0;
                     let highPts = 1000;
@@ -355,7 +380,7 @@
                     for (let i = 0; i < 40; i++) {
                         let midPts = (lowPts + highPts) / 2;
                         let estFee = midPts * feePerPoint;
-                        let calc = this.calculateBonusRaw(midPts, title, estFee, 0);
+                        let calc = this.calculateBonusRaw(midPts, title, estFee, 0, tenureFactor); // 👈 帶入 MSPI 因子
                         if (calc.total < targetBonus) {
                             lowPts = midPts;
                         } else {
@@ -365,7 +390,7 @@
 
                     neededPts = Math.round(highPts * 10) / 10;
                     let finalFee = neededPts * feePerPoint;
-                    finalCalc = this.calculateBonusRaw(neededPts, title, finalFee, 0);
+                    finalCalc = this.calculateBonusRaw(neededPts, title, finalFee, 0, tenureFactor);
 
                     const w = this.reverseInput.weights;
                     const ptsAlloc = {
@@ -408,10 +433,12 @@
                     };
                 },
 
-                // 當月實際獎勵計算邏輯（正推）
+                // 當月實際獎勵計算邏輯（正推 - 支援新進 MSPI 折減因子）
                 runBonusCalculation(input) {
                     const rule = this.titleRules[input.title];
-                    const spi = rule.spi;
+                    const tenureModifier = this.tenureOptions.find(o => o.id === input.tenureModifierId) || { factor: 1.0 };
+                    const tenureFactor = tenureModifier.factor;
+                    const spi = rule.spi * tenureFactor; // 👈 完美折減後之標準
 
                     let mortgagePts = input.mortgage / 50;
                     let creditPts = (input.credit / 5) * 3;
@@ -433,7 +460,7 @@
                     let totalRate = finPart + nonFinScore;
                     totalRate = Math.round(totalRate * 100) / 100;
 
-                    let calcRaw = this.calculateBonusRaw(totalPoints, input.title, input.feeIncome, input.projectPoints);
+                    let calcRaw = this.calculateBonusRaw(totalPoints, input.title, input.feeIncome, input.projectPoints, tenureFactor);
 
                     let revolvingBonus = 0;
                     if (totalRate >= 100) {
@@ -445,7 +472,7 @@
                     let pointsToNext = Math.round((spi - totalPoints) * 10) / 10;
                     let motivationalTips = '';
                     if (totalRate < 100) {
-                        motivationalTips = `🔥 <strong>距離合格獵人還差一步！</strong> 您的業績達成率為 <span class="text-red-500 font-extrabold">${totalRate}%</span>。你需要再取得 <span class="text-gold font-bold">${pointsToNext} 點</span> 才能跨過 100% 的達標門檻，並解鎖循環型信貸促動獎勵！多撥款一筆 <strong>NT$ 150 萬元房貸</strong> 或轉介 <strong>1 戶理財戶</strong>，立刻解鎖獎勵！`;
+                        motivationalTips = `🔥 <strong>距離合格獵人還差一步！</strong> 您的業績達成率為 <span class="text-red-500 font-extrabold">${totalRate}%</span>。您在目前在職身分下，定義的新進 MSPI 標準為 <span class="text-gold font-bold">${Math.round(spi * 10) / 10} 點</span>，您還需要取得 <span class="text-gold font-bold">${pointsToNext} 點</span> 才能跨過 100% 的達標門檻，並解鎖循環型信貸促動獎勵！多撥款一筆 <strong>NT$ 150 萬元房貸</strong> 或轉介 <strong>1 戶理財戶</strong>，立刻解鎖獎勵！`;
                     } else if (totalRate <= 150) {
                         let pointsTo150 = Math.round(((spi * 1.5) - totalPoints) * 10) / 10;
                         motivationalTips = `🚀 <strong>你正在累積戰果，但還不夠野心！</strong> 目前達成率為 <span class="text-gold font-extrabold">${totalRate}%</span>。距離 151% 的高額獎金加碼跳檻區（專員跳至 365元/點，襄理跳至 368元/點）僅差 <span class="text-red-500 font-bold">${pointsTo150} 點</span>！多成交一筆 <strong>NT$ 25 萬元的信貸</strong> 即可讓全月整袋點數價值瞬間爆增，別給對手喘息的機會！`;
@@ -511,12 +538,16 @@
                     }
                     return Math.round(wan).toLocaleString('en-US') + ' 萬元';
                 }
-            }));
-        });
+            };
+        }
     </script>
+    
+    <!-- 2. 異步且延遲載入 Alpine.js，防止與全域 feibApp 宣告產生載入競態衝突 (嚴格符合規範加入 defer) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body class="bg-slate-50 dark:bg-navy-900 text-slate-800 dark:text-slate-100 transition-colors duration-200">
 
+    <!-- 3. 直接綁定全域函數 feibApp 取得資料模型 -->
     <div x-data="feibApp()" class="min-h-screen flex flex-col">
         <!-- 頂部高階導覽列 -->
         <header class="bg-navy-900 text-white border-b border-gold/30 shadow-lg sticky top-0 z-50">
@@ -568,23 +599,58 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- 左側：標準 SPI 點數設定 -->
-                    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
-                        <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-700">
-                            <span class="text-xl">👤</span>
-                            <h3 class="font-extrabold text-lg text-gold">各職級標準產值 (SPI)</h3>
+                    <!-- 左側：標準 SPI 點數設定與新進同仁折減 -->
+                    <div class="space-y-6">
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-700">
+                                <span class="text-xl">👤</span>
+                                <h3 class="font-extrabold text-lg text-gold">各職級標準產值 (SPI)</h3>
+                            </div>
+                            <div class="space-y-3">
+                                <template x-for="(val, title) in titleRules" :key="title">
+                                    <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-xl hover:border-gold/50 border border-transparent transition-all">
+                                        <span class="font-bold text-slate-700 dark:text-slate-300" x-text="title"></span>
+                                        <span class="bg-gold/10 text-gold font-extrabold px-3 py-1 rounded-lg" x-text="val.spi + ' 點'"></span>
+                                    </div>
+                                </template>
+                            </div>
                         </div>
-                        <div class="space-y-3">
-                            <template x-for="(val, title) in titleRules" :key="title">
-                                <div class="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-900 rounded-xl hover:border-gold/50 border border-transparent transition-all">
-                                    <span class="font-bold text-slate-700 dark:text-slate-300" x-text="title"></span>
-                                    <span class="bg-gold/10 text-gold font-extrabold px-3 py-1 rounded-lg" x-text="val.spi + ' 點'"></span>
+
+                        <!-- 🌟 新進同仁與晉升 MSPI 產能減免規範卡片 -->
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
+                            <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-700">
+                                <span class="text-xl">🌱</span>
+                                <h3 class="font-extrabold text-lg text-gold">新進同仁與晉升 MSPI 規範</h3>
+                            </div>
+                            <div class="space-y-4 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                                <div class="p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                                    <h4 class="font-bold text-emerald-600 dark:text-emerald-400 mb-1">👶 不具業務經驗（任本職未滿五個月）</h4>
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>第 1 個月：MSPI = SPI × 20%</li>
+                                        <li>第 2 個月：MSPI = SPI × 40%</li>
+                                        <li>第 3 個月：MSPI = SPI × 60%</li>
+                                        <li>第 4 個月：MSPI = SPI × 80%</li>
+                                    </ul>
                                 </div>
-                            </template>
+                                <div class="p-3 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                                    <h4 class="font-bold text-blue-600 dark:text-blue-400 mb-1">👔 具備業務經驗之新進行員</h4>
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>第 1 個月：MSPI = SPI × 30%</li>
+                                        <li>第 2 個月：MSPI = SPI × 60%</li>
+                                        <li>第 3 個月：MSPI = SPI × 90%</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 bg-purple-500/5 border border-purple-500/20 rounded-xl">
+                                    <h4 class="font-bold text-purple-600 dark:text-purple-400 mb-1">👑 職稱晉升同仁適用</h4>
+                                    <ul class="list-disc pl-4 space-y-0.5">
+                                        <li>晉升後新職稱之 SPI 前三個月以 <strong>95 折 (95% SPI)</strong> 計算。</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 中間：產品換算點數對應表 -->
+                    <!-- 右側：產品換算點數對應表 -->
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 lg:col-span-2">
                         <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-700">
                             <span class="text-xl">📊</span>
@@ -623,7 +689,7 @@
                     </div>
                 </div>
 
-                <!-- 獎勵金級距表（分段累進 - 已修正手續費亂碼） -->
+                <!-- 獎勵金級距表（分段累進） -->
                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
                     <div class="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-700">
                         <span class="text-xl">💰</span>
@@ -698,19 +764,31 @@
                     <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 lg:col-span-5 space-y-6">
                         <h3 class="font-extrabold text-lg text-gold border-b border-slate-100 dark:border-slate-700 pb-3">⚙️ 設定你的狩獵規模</h3>
                         
-                        <!-- 選擇職級 -->
-                        <div>
-                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">1. 選擇你的當前職級 (對應不同 SPI)</label>
-                            <select x-model="reverseInput.title" @change="onReverseTitleChange()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl font-bold focus:ring-2 focus:ring-gold focus:outline-none">
-                                <template x-for="(val, title) in titleRules" :key="title">
-                                    <option :value="title" x-text="title + ' (SPI: ' + val.spi + ' 點)'"></option>
-                                </template>
-                            </select>
+                        <!-- 選擇職級與在職年資 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">1. 選擇你的當前職級</label>
+                                <select x-model="reverseInput.title" @change="onReverseTitleChange()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl font-bold focus:ring-2 focus:ring-gold focus:outline-none">
+                                    <template x-for="(val, title) in titleRules" :key="title">
+                                        <option :value="title" x-text="title + ' (SPI: ' + val.spi + ' 點)'"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- 🌟 新增：在職與年資折減選擇器 -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">2. 在職/年資折減選擇</label>
+                                <select x-model="reverseInput.tenureModifierId" @change="solveReverse()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 rounded-xl font-bold text-sm focus:ring-2 focus:ring-gold focus:outline-none">
+                                    <template x-for="opt in tenureOptions" :key="opt.id">
+                                        <option :value="opt.id" x-text="opt.name"></option>
+                                    </template>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- 輸入野心金額 -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">2. 你想賺多少月獎金？輸入你的野心金額！</label>
+                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">3. 你想賺多少月獎金？輸入你的野心金額！</label>
                             <div class="relative rounded-xl shadow-sm">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <span class="text-slate-500 font-extrabold">NT$</span>
@@ -721,7 +799,7 @@
 
                         <!-- 調整產品配比 (多維度權重) -->
                         <div class="space-y-4">
-                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300">3. 調整你的擅長產品配比 (合計需為 100%)</label>
+                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300">4. 調整你的擅長產品配比 (合計需為 100%)</label>
                             
                             <!-- 房貸滑桿 -->
                             <div>
@@ -766,7 +844,7 @@
 
                         <!-- 平均手續費率估算 -->
                         <div>
-                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-1">4. 房信貸平均預估收費金額 / 每點績效</label>
+                            <label class="block text-sm font-bold text-slate-600 dark:text-slate-300 mb-1">5. 房信貸平均預估收費金額 / 每點績效</label>
                             <p class="text-xs text-slate-400 mb-2">手續費收入將會依照業績達成率級距成比例計給收費獎勵。預設每績效點手續費為 NT$ 300 元。</p>
                             <input type="number" x-model.number="reverseInput.feePerPoint" @input="solveReverse()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-gold">
                         </div>
@@ -778,7 +856,7 @@
                             <div class="space-y-6">
                                 <!-- 核心業績戰鬥數據看板 -->
                                 <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
-                                    <h3 class="font-extrabold text-lg text-gold border-b border-slate-100 dark:border-slate-700 pb-3 mb-4">🏆 獵殺目標：業績戰鬥看板</h3>
+                                    <h3 class="font-extrabold text-lg text-gold border-b border-slate-100 dark:border-slate-700 pb-3 mb-4">🏆 🏆 獵殺目標：業績戰鬥看板</h3>
                                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                         <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl text-center">
                                             <p class="text-xs text-slate-400 font-bold uppercase tracking-wider">目標月獎金</p>
@@ -907,19 +985,30 @@
                             <button @click="resetCalcInputs()" class="text-xs text-slate-400 hover:text-gold font-bold">🗑️ 清空重填</button>
                         </div>
 
-                        <!-- 職級與標準 SPI -->
-                        <div class="grid grid-cols-2 gap-4">
+                        <!-- 職級與標準 SPI & 新進折減 -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">職級</label>
-                                <select x-model="calcInput.title" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg font-bold text-sm">
+                                <select x-model="calcInput.title" class="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg font-bold text-sm">
                                     <template x-for="(val, title) in titleRules" :key="title">
                                         <option :value="title" x-text="title"></option>
                                     </template>
                                 </select>
                             </div>
+                            
+                            <!-- 🌟 新增：新進/在職狀態選擇器 -->
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">對應標準 SPI</label>
-                                <div class="w-full bg-slate-100 dark:bg-slate-900 border border-transparent p-2 rounded-lg font-extrabold text-sm text-center" x-text="titleRules[calcInput.title].spi + ' 點'"></div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">在職年資/晉升狀態折減</label>
+                                <select x-model="calcInput.tenureModifierId" class="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 p-2 rounded-lg font-bold text-sm">
+                                    <template x-for="opt in tenureOptions" :key="opt.id">
+                                        <option :value="opt.id" x-text="opt.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">折減後實際目標 MSPI</label>
+                                <div class="w-full bg-slate-100 dark:bg-slate-900 border border-transparent p-2 rounded-lg font-extrabold text-sm text-center text-gold" x-text="Math.round(titleRules[calcInput.title].spi * (tenureOptions.find(o => o.id === calcInput.tenureModifierId)?.factor || 1.0) * 10) / 10 + ' 點'"></div>
                             </div>
                         </div>
 
